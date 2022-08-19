@@ -5,6 +5,7 @@ import mediapipe
 import handTrackingModule as handTM
 import numpy as np
 import screen_brightness_control as sbc
+import pyautogui
 
 # pycaw setup
 from ctypes import cast, POINTER
@@ -22,6 +23,7 @@ cam.set(4, 720)
 # our module setup
 detector = handTM.handDetector(detectionConfi=0.7, trackingConfi=0.6)
 
+
 # variables
 currentTime = 0
 prevTime = 0
@@ -31,6 +33,12 @@ displayPercentage = 0
 displayBar = 420
 area = 0
 colorVolume = (420, 420, 69)
+
+wScreen, hScreen = pyautogui.size()
+cTime, pTime = 0, 0
+plocX, plocY = 0, 0
+clocX, clocY = 0, 0
+mouseSmootheningFactor = 6
 
 while True:
     success, img = cam.read()
@@ -64,6 +72,34 @@ while True:
                 boundaryBoxR = visibleHand["bbox"]
                 command = "Virtual Mouse"
                 # space for virtual mouse code
+                x1, y1 = lmListR[8][:2]
+                x2, y2 = lmListR[12][:2]
+                fingers = detector.fingersUp(hands[0])
+                cv2.rectangle(img, (100, 150), (600, 430),
+                              (69, 420, 420), 2)
+                if fingers[1] == 1 and fingers[2] == 0:
+                    x3 = np.interp(x1, (100, 600), (0, wScreen))
+                    y3 = np.interp(
+                        y1, (150, 430), (0, hScreen))
+                    #  Smoothen Values
+                    clocX = plocX + (x3 - plocX) / mouseSmootheningFactor
+                    clocY = plocY + (y3 - plocY) / mouseSmootheningFactor
+                    #  Move Mouse
+                    pyautogui.moveTo(int(wScreen - clocX),
+                                     int(clocY), duration=0.01)
+                    cv2.circle(img, (x1, y1), 15, (255, 0, 255), cv2.FILLED)
+                    plocX, plocY = clocX, clocY
+                #  Both Index and middle fingers are up : Clicking Mode
+                if fingers[1] == 1 and fingers[2] == 1:
+                    #  Find distance between fingers
+                    length,  lineInfo, img = detector.findDistance(
+                        lmListR[8][0:2], lmListR[12][0:2], img)
+                    #  Click mouse if distance short
+                    if length < 40:
+                        cv2.circle(img, (lineInfo[4], lineInfo[5]),
+                                   15, (0, 255, 0), cv2.FILLED)
+                        pyautogui.click()
+
         elif len(hands) == 2:
             if(hands[0]["type"] == "Right"):
                 rightHand = hands[0]
@@ -88,6 +124,34 @@ while True:
             # for now using count later can be extended for other gestures
             if fingersUpLeft == 0:
                 command = "Virtual Mouse"
+                x1, y1 = lmListR[8][:2]
+                x2, y2 = lmListR[12][:2]
+                fingers = detector.fingersUp(rightHand)
+                cv2.rectangle(img, (100, 150), (600, 430),
+                              (69, 420, 420), 2)
+                if fingers[1] == 1 and fingers[2] == 0:
+                    x3 = np.interp(x1, (100, 600), (0, wScreen))
+                    y3 = np.interp(
+                        y1, (150, 430), (0, hScreen))
+                    #  Smoothen Values
+                    clocX = plocX + (x3 - plocX) / mouseSmootheningFactor
+                    clocY = plocY + (y3 - plocY) / mouseSmootheningFactor
+                    #  Move Mouse
+                    pyautogui.moveTo(int(wScreen - clocX),
+                                     int(clocY), duration=0.01)
+                    cv2.circle(img, (x1, y1), 15, (255, 0, 255), cv2.FILLED)
+                    plocX, plocY = clocX, clocY
+                #  Both Index and middle fingers are up : Clicking Mode
+                if fingers[1] == 1 and fingers[2] == 1:
+                    #  Find distance between fingers
+                    length,  lineInfo, img = detector.findDistance(
+                        lmListR[8][0:2], lmListR[12][0:2], img)
+                    #  Click mouse if distance short
+                    if length < 40:
+                        cv2.circle(img, (lineInfo[4], lineInfo[5]),
+                                   15, (0, 255, 0), cv2.FILLED)
+                        pyautogui.click()
+############################################################################################################
             elif fingersUpLeft == 1:
                 command = "Volume Control"
                 if(len(lmListR) != 0):
