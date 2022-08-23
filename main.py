@@ -21,7 +21,7 @@ cam = cv2.VideoCapture(0)
 cam.set(3, 1080)
 cam.set(4, 720)
 # our module setup
-detector = handTM.handDetector(detectionConfi=0.7, trackingConfi=0.6)
+detector = handTM.handDetector(detectionConfi=0.7, trackingConfi=0.7)
 
 
 # variables
@@ -39,8 +39,9 @@ cTime, pTime = 0, 0
 plocX, plocY = 0, 0
 clocX, clocY = 0, 0
 mouseSmootheningFactor = 6
+flag = True
 
-while True:
+while flag:
     success, img = cam.read()
     hands, img = detector.findHands(img)
 
@@ -66,7 +67,7 @@ while True:
                 elif fingersUpLeft == 4:
                     command = "comand 4"
                 elif fingersUpLeft == 5:
-                    command = "comand 5"
+                    command = "Do You Want To Exit ?"
             elif(visibleHand["type"] == "Right"):
                 lmListR = visibleHand["lmList"]
                 boundaryBoxR = visibleHand["bbox"]
@@ -249,7 +250,14 @@ while True:
             elif fingersUpLeft == 4:
                 command = "comand 4"
             elif fingersUpLeft == 5:
-                command = "comand 5"
+                command = "Do You Want To Exit ?"
+                if(len(lmListR) != 0):
+                    length, lineInfo, img = detector.findDistance(
+                        lmListR[4][0:2], lmListR[8][0:2], img)
+                    if length < 40:
+                        cv2.circle(img, (lineInfo[4], lineInfo[5]),
+                                   6, (420, 69, 69), cv2.FILLED)
+                        flag = False
 
     # frame rate
     currentTime = time.time()
@@ -262,3 +270,7 @@ while True:
                 cv2.FONT_HERSHEY_TRIPLEX, 1, (420, 0, 0), 2)
     cv2.imshow("TEST HAI LOL", img)
     cv2.waitKey(1)
+
+
+# we can add switching tabs capability
+# capture screen / print screen

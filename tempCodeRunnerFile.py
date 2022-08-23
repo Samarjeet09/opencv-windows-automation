@@ -1,1 +1,0 @@
-lmListR[4][0:2], lmListR[8][0:2], img
