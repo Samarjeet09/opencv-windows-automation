@@ -33,15 +33,17 @@ displayPercentage = 0
 displayBar = 420
 area = 0
 colorVolume = (420, 420, 69)
+maxLength = 100
+minLenght = 10
 
 wScreen, hScreen = pyautogui.size()
 cTime, pTime = 0, 0
 plocX, plocY = 0, 0
 clocX, clocY = 0, 0
-mouseSmootheningFactor = 6
+mouseSmootheningFactor = 4
 flag = True
 
-while flag:
+while flag: #set to true by default
     success, img = cam.read()
     hands, img = detector.findHands(img)
 
@@ -72,7 +74,6 @@ while flag:
                 lmListR = visibleHand["lmList"]
                 boundaryBoxR = visibleHand["bbox"]
                 command = "Virtual Mouse"
-                # space for virtual mouse code
                 x1, y1 = lmListR[8][:2]
                 x2, y2 = lmListR[12][:2]
                 fingers = detector.fingersUp(hands[0])
@@ -96,10 +97,11 @@ while flag:
                     length,  lineInfo, img = detector.findDistance(
                         lmListR[8][0:2], lmListR[12][0:2], img)
                     #  Click mouse if distance short
-                    if length < 40:
+                    if length < 20:
                         cv2.circle(img, (lineInfo[4], lineInfo[5]),
                                    15, (0, 255, 0), cv2.FILLED)
-                        pyautogui.click()
+                        pyautogui.click(int(wScreen - clocX),
+                                        int(clocY))
 
         elif len(hands) == 2:
             if(hands[0]["type"] == "Right"):
@@ -139,7 +141,7 @@ while flag:
                     clocY = plocY + (y3 - plocY) / mouseSmootheningFactor
                     #  Move Mouse
                     pyautogui.moveTo(int(wScreen - clocX),
-                                     int(clocY), duration=0.01)
+                                     int(clocY))
                     cv2.circle(img, (x1, y1), 15, (255, 0, 255), cv2.FILLED)
                     plocX, plocY = clocX, clocY
                 #  Both Index and middle fingers are up : Clicking Mode
@@ -148,15 +150,18 @@ while flag:
                     length,  lineInfo, img = detector.findDistance(
                         lmListR[8][0:2], lmListR[12][0:2], img)
                     #  Click mouse if distance short
-                    if length < 40:
+                    if length < 20:
                         cv2.circle(img, (lineInfo[4], lineInfo[5]),
                                    15, (0, 255, 0), cv2.FILLED)
-                        pyautogui.click()
+                        pyautogui.click(int(wScreen - clocX),
+                                        int(clocY))
 ############################################################################################################
             elif fingersUpLeft == 1:
                 command = "Volume Control"
                 if(len(lmListR) != 0):
                     area = boundaryBoxR[2] * boundaryBoxR[3] // 100
+                    maxLength = 100
+                    minLenght = 10
                     if 100 < area < 1000:
                         if 100 < area < 250:
                             maxLength = 100
@@ -181,8 +186,8 @@ while flag:
                             displayPercentage/100, None)
                         cv2.circle(img, (lineInfo[4], lineInfo[5]),
                                    6, (0, 255, 89), cv2.FILLED)  # indication ki vol set karidya
-                        cv2.putText(img, f'setting mode', (100, 69),
-                                    cv2.FONT_HERSHEY_PLAIN, 2, (69, 420, 69), 2)
+                        cv2.putText(img, f'setting mode', (120, 69),
+                                    cv2.FONT_HERSHEY_PLAIN, 2, (420, 420, 69), 2)
                         colorVolume = (420, 69, 420)
                     else:
                         colorVolume = (420, 420, 69)
@@ -193,9 +198,9 @@ while flag:
                 cv2.rectangle(img, (50, 69), (75, 420), (69, 69, 69), 3)
                 cv2.rectangle(img, (50, int(displayBar)), (75, 420),
                               (69, 420, 420), cv2.FILLED)
-                currentBrightness = int(
+                currentVol = int(
                     volume.GetMasterVolumeLevelScalar()*100)
-                cv2.putText(img, f'Set Volume:{int(currentBrightness)}%', (400, 69),
+                cv2.putText(img, f'Set Volume:{int(currentVol)}%', (400, 69),
                             cv2.FONT_HERSHEY_PLAIN, 2, colorVolume, 2)
                 cv2.putText(img, f'{int(displayPercentage)}%', (30, 450),
                             cv2.FONT_HERSHEY_PLAIN, 2, (69, 420, 69), 2)
@@ -227,8 +232,8 @@ while flag:
                         sbc.set_brightness(displayPercentage, display=0)
                         cv2.circle(img, (lineInfo[4], lineInfo[5]),
                                    6, (0, 255, 89), cv2.FILLED)  # indication ki Brightness set karidya
-                        cv2.putText(img, f'setting mode', (100, 69),
-                                    cv2.FONT_HERSHEY_PLAIN, 2, (69, 420, 69), 2)
+                        cv2.putText(img, f'setting mode', (120, 69),
+                                    cv2.FONT_HERSHEY_PLAIN, 2, (420, 420, 69), 2)
                         colorVolume = (420, 69, 420)
                     else:
                         colorVolume = (420, 420, 69)
@@ -240,7 +245,7 @@ while flag:
                 cv2.rectangle(img, (50, int(displayBar)), (75, 420),
                               (69, 420, 420), cv2.FILLED)
                 currentBrightness = sbc.get_brightness()
-                print(currentBrightness)
+                print(f'The current Brightness is :{currentBrightness}')
                 cv2.putText(img, f'Set Brightness:{int(currentBrightness[0])}%', (400, 69),
                             cv2.FONT_HERSHEY_PLAIN, 2, colorVolume, 2)
                 cv2.putText(img, f'{int(displayPercentage)}%', (30, 450),
@@ -254,10 +259,11 @@ while flag:
                 if(len(lmListR) != 0):
                     length, lineInfo, img = detector.findDistance(
                         lmListR[4][0:2], lmListR[8][0:2], img)
-                    if length < 40:
+                    if length < 20:
                         cv2.circle(img, (lineInfo[4], lineInfo[5]),
                                    6, (420, 69, 69), cv2.FILLED)
                         flag = False
+                        print("EXITED")
 
     # frame rate
     currentTime = time.time()
